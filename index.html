@@ -1,0 +1,192 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kaff Kafe Vendor Ordering</title>
+<style>
+*{box-sizing:border-box} body{margin:0;font-family:Arial,sans-serif;background:#f5f7fa;color:#17202a}
+header{background:#111827;color:white;padding:14px 20px;display:flex;gap:12px;align-items:center;position:sticky;top:0;z-index:5}
+.logo{font-size:21px;font-weight:800} .tag{background:#334155;padding:6px 10px;border-radius:20px;font-size:12px;font-weight:800}
+#search{margin-left:auto;width:38%;padding:11px;border:1px solid #475569;border-radius:9px}
+.logout{border:1px solid #64748b;background:#1f2937;color:#fff;padding:9px 12px;border-radius:8px;font-weight:700}
+.layout{display:grid;grid-template-columns:260px 1fr;gap:18px;max-width:1500px;margin:18px auto;padding:0 16px}
+.panel,.card,.summary,.meta{background:#fff;border:1px solid #ddd;border-radius:14px} .panel{padding:16px;height:max-content}
+.vbtn{width:100%;padding:11px;border:0;background:transparent;text-align:left;border-radius:8px;font-weight:700;cursor:pointer}
+.vbtn.active{background:#eaf0ff;color:#174ea6} .count{float:right;color:#667085}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.card{padding:14px;min-height:160px;display:flex;flex-direction:column;gap:7px} .small{font-size:12px;color:#667085}
+.name{font-weight:800} .row{margin-top:auto;display:flex;justify-content:space-between;align-items:center} button{cursor:pointer}
+.qty button{width:30px;height:30px;border:1px solid #ccc;background:#fff;border-radius:7px} .qty span{display:inline-block;min-width:26px;text-align:center;font-weight:800}
+.add,.send{border:0;border-radius:8px;padding:9px 12px;font-weight:800;color:#fff} .add{background:#155eef} .send{background:#0b7a45}
+.orders{max-width:1500px;margin:0 auto 30px;padding:0 16px} .meta{padding:14px;display:grid;grid-template-columns:1fr 1fr 2fr;gap:12px;margin-bottom:14px}
+input,textarea{width:100%;padding:10px;border:1px solid #ccc;border-radius:8px} .summary{padding:18px}
+.summaryTop{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.sumgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:14px}
+.vendorSum{border:1px solid #ddd;border-radius:10px;overflow:hidden} .vendorSum h3{margin:0;padding:11px;background:#f8fafc}
+.line{display:flex;justify-content:space-between;gap:12px;padding:9px 11px;border-top:1px solid #eee;font-size:13px}
+.secondary{border:0;background:#f2f4f7;padding:9px 12px;border-radius:8px;font-weight:800}
+.login{position:fixed;inset:0;z-index:99;background:#f5f7fa;display:flex;align-items:center;justify-content:center}
+.loginbox{width:420px;max-width:92%;background:#fff;padding:30px;border:1px solid #ddd;border-radius:18px}
+.loginbox label{display:block;font-size:13px;font-weight:800;margin:12px 0 6px} .loginbox .add{width:100%;margin-top:16px}
+#err{display:none;color:#b42318;background:#fff1f1;padding:10px;margin-top:10px;border-radius:8px}
+.contact{font-size:13px;color:#475467;margin:4px 0 12px} @media(max-width:850px){.layout{grid-template-columns:1fr}.meta{grid-template-columns:1fr}#search{width:45%}}
+
+.calendarWrap{max-width:1500px;margin:0 auto 30px;padding:0 16px}
+.calendarPanel{background:#fff;border:1px solid #ddd;border-radius:14px;padding:18px}
+.calendarTop{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.calendarControls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.calendarControls button{border:0;background:#f2f4f7;padding:9px 12px;border-radius:8px;font-weight:800}
+.calendarForm{display:grid;grid-template-columns:1.2fr 1fr 2fr auto;gap:10px;margin:14px 0}
+.calendarGrid{display:grid;grid-template-columns:repeat(7,1fr);border-left:1px solid #e5e7eb;border-top:1px solid #e5e7eb}
+.calHead,.calDay{border-right:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb}
+.calHead{padding:9px;text-align:center;background:#f8fafc;font-size:12px;font-weight:800}
+.calDay{min-height:110px;padding:7px;background:#fff}
+.calDay.muted{background:#fafafa;color:#98a2b3}
+.calDate{font-size:12px;font-weight:800;margin-bottom:6px}
+.calEvent{font-size:11px;background:#eef4ff;border:1px solid #c7d7fe;border-radius:6px;padding:5px 6px;margin:4px 0;cursor:pointer}
+.calEvent b{display:block}
+.calendarList{margin-top:14px;border-top:1px solid #eee;padding-top:12px}
+.calListRow{display:grid;grid-template-columns:120px 1.2fr 2fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #eee;font-size:13px}
+.deleteEvent{border:0;background:#fff1f1;color:#b42318;padding:7px 9px;border-radius:7px;font-weight:800}
+@media(max-width:850px){.calendarForm{grid-template-columns:1fr}.calDay{min-height:80px}.calListRow{grid-template-columns:1fr}}
+
+</style></head><body>
+<div id="login" class="login"><div class="loginbox"><h1>Kaff Kafe Ordering</h1><p class="small">Private Vendor Ordering System</p>
+<form id="lf"><label>Username</label><input id="u" value="admin"><label>Password</label><input id="pw" type="password">
+<button class="add">Log In</button><div id="err">Incorrect username or password.</div></form></div></div>
+<header><div class="logo">Kaff Kafe Vendor Ordering</div><div class="tag">PRIVATE</div><input id="search" placeholder="Search vendor items..."><button class="logout" onclick="logout()">Logout</button></header>
+<div class="layout"><aside class="panel"><h3>Vendors</h3><div id="vendors"></div><p class="small">Add items from one or more vendors before sending.</p></aside>
+<main><h2 id="title"></h2><div id="contact" class="contact"></div><div id="cats" class="small"></div><div id="grid" class="grid" style="margin-top:12px"></div></main></div>
+<div class="orders"><div class="meta"><div><div class="small">Ordered by</div><input id="buyer" placeholder="Name"></div>
+<div><div class="small">Order date / delivery date</div><input id="delivery" placeholder="e.g. Sept 10"></div>
+<div><div class="small">Delivery / notes</div><textarea id="notes" rows="2" placeholder="Special instructions"></textarea></div></div>
+<div class="summary"><div class="summaryTop"><div><h2 style="margin:0">Order Summary</h2><div class="small">TEST MODE: Orders are grouped by vendor and addressed to graphics@kaffkafe.com.</div></div>
+<div><button class="secondary" onclick="clearAll()">Clear All</button> <button class="send" onclick="sendOrders()">Send Orders</button></div></div><div id="sumgrid" class="sumgrid"></div></div></div>
+
+<div class="calendarWrap">
+  <div class="calendarPanel">
+    <div class="calendarTop">
+      <div>
+        <h2 style="margin:0">Vendor Ordering Calendar</h2>
+        <div class="small">Track planned and completed vendor ordering dates for Kaff Kafe. Calendar entries are saved in this browser.</div>
+      </div>
+      <div class="calendarControls">
+        <button onclick="moveMonth(-1)">‹ Previous</button>
+        <b id="monthLabel"></b>
+        <button onclick="moveMonth(1)">Next ›</button>
+        <button onclick="goToday()">Today</button>
+      </div>
+    </div>
+    <div class="calendarForm">
+      <select id="calVendor"></select>
+      <input id="calDate" type="date">
+      <input id="calNote" placeholder="Note, order details, or reminder">
+      <button class="add" onclick="addCalendarEvent()">Add to Calendar</button>
+    </div>
+    <div id="calendarGrid" class="calendarGrid"></div>
+    <div class="calendarList">
+      <h3 style="margin:0 0 8px">Upcoming / Saved Ordering Dates</h3>
+      <div id="calendarList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const products=[{"vendor": "Affordable Distributers", "name": "6\" Baking Cup 20/500", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "18 x 500 Heavy Duty Aluminum Foil", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "Super u Lavender cleaner & deodorant 4/1 gallon", "category": "Grocery", "code": ""}, {"vendor": "Affordable Distributers", "name": "5 Gallon Super U Lavender Cleaner Deodorant", "category": "Grocery", "code": ""}, {"vendor": "Affordable Distributers", "name": "Poly Gloves Large 10/500", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "12x7x14 Flat Handle Paper Bag 200Pcs", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "7\" Bagasse Plate /1000", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "9\" White Paper Plates 10/100", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "23.3 oz. Take-Out Pan with Dome Lid 100/Case", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "2 Ply Bath Tissue 4.1 x 3.196 Rolls /cs", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "64 oz Pet Bottle /45", "category": "Grocery", "code": ""}, {"vendor": "Affordable Distributers", "name": "21X14X7 20 per bundle", "category": "Grocery", "code": ""}, {"vendor": "Affordable Distributers", "name": "16 Oz. Black Combo Microwave Container /150", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "24 Oz Black Combo Microwave Container /150", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "32 Oz. Black Combo Microwave Container /150", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "medium weight mealkit SS/F/K/N /250", "category": "Grocery", "code": ""}, {"vendor": "Affordable Distributers", "name": "Black HD Forks /1000", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "Black HD Knife /1000", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "Black HD Soup Spoons /1000", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "Bar mops towels 5/12", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "23X17X46 XXHD Garbage Bags Individually Folded /100", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "16 Oz Paper Cup Bean /1000", "category": "Produce", "code": ""}, {"vendor": "Affordable Distributers", "name": "Reclosable Black Dome Lid /1000", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "TS24PW Pagoda Ware Square /174", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "TS32PW Pagoda Ware Square /168", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "Lrg Handle Twisted 13x7x17 /250", "category": "Grocery", "code": ""}, {"vendor": "Affordable Distributers", "name": "10\" Kraft Pizza box /50", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "18 Corrugated Pizza Box 18 x 18 x 2 /50", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "7 oz Plastic Cups 12/100", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "2oz Portion cups 25/100", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "2oz portion cup lids 25/100", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "24 Oz Black Sq Presenta Bowl /252", "category": "Grocery", "code": ""}, {"vendor": "Affordable Distributers", "name": "Lid For 24-64 Oz SQ Presenta Bowl /252", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "1/2 Size Deep Aluminum Pan/100", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "1/2 Size Lids /100", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "#5 Brown Paper Bag /500", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "Small handle 10x5x13 brown paper bag /250", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "9 In Sugarcane Plates /400", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "1/6 shopping bags black 20 mic /600", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "8\" DOME LID FOR ROUND BOWLS", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "5-LB FOOD TRAY RED CHECKED/500", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "Green Magic Dish Detergent 4/1 Gallon", "category": "Grocery", "code": ""}, {"vendor": "Affordable Distributers", "name": "Mop Heads 24\" /12", "category": "Grocery", "code": ""}, {"vendor": "Affordable Distributers", "name": "Xpress 1/4 fold napkins 12/500", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "Multi Fold Kraft Paper Towel /4000", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "18 x 500 Heavy Duty Aluminum Foil", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "18X2000 Hi Valu Foodservice Film", "category": "Supplies", "code": ""}, {"vendor": "Affordable Distributers", "name": "3.125 x 230 Thermal Paper Roll /50", "category": "Supplies", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "PLAIN BREAD CRUMBS 25LB.", "category": "Bakery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "BLOOMEOS CHOCO COOKIES US 12/20OZ.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "ITALIAN DRESSING CLEAR US 4/1 GAL.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "ALL TRUMPS FLOUR (Yoshen) 50LB.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "PICKLE 66-80 2/9LT.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "MAYONNAISE 4/1GAL", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "CANOLA OIL US 35LB", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "EXTRA VIRGIN OLIVE OIL 6/2LT", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "SLICED GREEN OLIVES ISRAELI 2/9LT.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "SLICED BLACK OLIVES 6/10#", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "DIAMOND CRYSTAL KOSHER SALT 9/3LB.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "WORCESTERSHIRE SAUCE 4/1 GAL.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "BLACK PEPPER IND. 3000/0.1OZ", "category": "Produce", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "BLACK PEPPER GROUND 5LB.", "category": "Produce", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "GARLIC GRANULATED 6LB.", "category": "Produce", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "OREGANO 1.5LB", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "ARGO CORN STARCH CAN 12/16OZ.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "CORN STARCH 24/1LB.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "ND SALT 3000CT.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "ND SUGAR USA 2000/0.10OZ", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "ND SPLENDA 2000/1G", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "SUGAR DOMINO 50LB. USA", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "KETCHUP USA 6/10#", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "BEETS SLICED USA 6/10#", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "CHICK PEAS GARBANZO 6/10#", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "COOKING WINE WHITE 12/12OZ", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "CHICK PEAS 25LB.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "TAHINI HAR BRACHA 40LB.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "VANILLA FLAVOR CLEAR 1GAL.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "SEMOLINA FLOUR 50LB.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "BROCCOLI FLORETS PARDES 12/2LB.", "category": "Frozen", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "LEMON JUICE PREMIUM 12/32OZ.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "FETTUCCINI 2/10LB.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "PENNE RIGATE 20LB.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "TERIYAKI SAUCE 4/1 GAL.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "BABY CORN CUT 6/10#", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "SAUERKRAUT GLASS 12/19.4oz.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "WHOLE KERNEL CORN (US) 6/10#", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "BAKING SODA 12LB.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "QUINOA WHITE 6/3.96LB.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "GREEN SPLIT PEAS 12/2LB.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "YELLOW SPLIT PEAS 12/2LB.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "DRIED CRANBERRIES 25LB.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "SOUP BASE CHICKEN BL 40LB.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "SOUP BASE BEEF 25 LB", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "CHOCOLATE SYRUP 4/1 GAL.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "SANDWICH SL HOT PEPPER US 4/1 GAL.", "category": "Produce", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "COOKING SPRAY OIL 6/14OZ", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "ELBOW MACARONI 20LB", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "FETTUCINI 2/10LB.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "BASIL 1.5LB.", "category": "Grocery", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "CRUSHED HOT RED PEPPER 4LB.", "category": "Produce", "code": ""}, {"vendor": "R L GOODS DIST.", "name": "DUCK SAUCE 4/1 GAL.", "category": "Grocery", "code": ""}, {"vendor": "And Kosher Distribution", "name": "Milk Regular HG X 9", "category": "Dairy", "code": ""}, {"vendor": "And Kosher Distribution", "name": "Milk Low fat HG X 9", "category": "Dairy", "code": ""}, {"vendor": "And Kosher Distribution", "name": "Pure Premium Orange Juice 64oz x 9", "category": "Grocery", "code": ""}, {"vendor": "And Kosher Distribution", "name": "Hatov Grated Parmesan 4 x 5 LBS", "category": "Dairy", "code": ""}, {"vendor": "And Kosher Distribution", "name": "Muenster Cheese Loaf Hatov 8X7 LB", "category": "Dairy", "code": ""}, {"vendor": "And Kosher Distribution", "name": "Mozzarella Loaf PS Hatov 8X5 LB", "category": "Grocery", "code": ""}, {"vendor": "And Kosher Distribution", "name": "Hatov Feta Cheese 1 x 18 LB", "category": "Dairy", "code": ""}, {"vendor": "And Kosher Distribution", "name": "Milan Cream Cheese 1 x 30 LB", "category": "Dairy", "code": ""}, {"vendor": "And Kosher Distribution", "name": "Pure Premium Orange Juice 64oz x 9", "category": "Grocery", "code": ""}, {"vendor": "And Kosher Distribution", "name": "Sour Cream Hatov 6 x 5 LBS", "category": "Dairy", "code": ""}, {"vendor": "Klein's Ice Cream", "name": "Bulk Dairy Vanilla", "category": "Grocery", "code": ""}, {"vendor": "Klein's Ice Cream", "name": "Bulk Dairy Chocolate", "category": "Grocery", "code": ""}, {"vendor": "Universal Beverages", "name": "CAN DIET COKE 24/12 OZ 24 PACK", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "CAN COKE 24 PACK/24 12 OZ", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "CAN ZERO COKE 24/12 OZ.", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "CAN DR. PEPPER 24/12 OZ.", "category": "Produce", "code": ""}, {"vendor": "Universal Beverages", "name": "CAN FRESCA SODA 2/12 PACKS", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "CAN SEAGRAMS GINGER ALE 24/12", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "CAN SEAGRAMS SELTZER 24/12 OZ.", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "CAN DIET SPRITE ZERO 2/12 PACK", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "CAN SPRITE 24 PACK 24/12 OZ", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "CAN FANTA ORANGE 24/12 OZ", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "SNAPPLE APPLE 24/16 OZ.", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "SNAPPLE PEACH TEA 24/16 OZ.", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "SNAPPLE ORANGE ADE 24/16 OZ.", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "SNAPPLE LEMON TEA 24/16 OZ.", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "SNAPPLE APPLE 24/16 OZ.", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "SNAPPLE ZERO PEACH 24/16 OZ.", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "SNAPPLE KIWI STRAWBERRY 24/16OZ", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "SNAPPLE ZERO RASPBERRY 24/16OZ", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "SNAPPLE RASPBERRY 24/16 OZ.", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "SNAPPLE MADNESS 24/16 OZ.", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "SNAPPLE RASPBERRY PEACH 24/16", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "GLACAU DIET POWER-C 24/20 OZ.", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "GLACAU DIET XXX 24/20 OZ.", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "GLACAU FOCUS 24/20 OZ.", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "GLACAU XXX 24/20 OZ.", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "1.25 LITER COKE 12/1.25 LITER", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "1.25 LITER SPRITE 12/1.25 LITE", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "1 LITER BEER MAYIM SELTZER 12", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "1.5 LITER POLAND SPRING 12/1.5", "category": "Grocery", "code": ""}, {"vendor": "Universal Beverages", "name": "1 LITER BEER MAYIM SELTZER 12", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "POLAND 40/16.9 WATER", "category": "Beverages", "code": ""}, {"vendor": "Universal Beverages", "name": "PLASTIC VOSS 850 ML 12 CNT", "category": "Beverages", "code": ""}, {"vendor": "YUMMIE'S FROZEN", "name": "BREADED EGGPLANT ROUND 15lb.", "category": "Bakery", "code": ""}, {"vendor": "YUMMIE'S FROZEN", "name": "CRISPY COATED FRENCH FRIES 6/4.5lb", "category": "Frozen", "code": ""}, {"vendor": "YUMMIE'S FROZEN", "name": "SPICY FRIES 27lbs", "category": "Frozen", "code": ""}, {"vendor": "YUMMIE'S FROZEN", "name": "CLEAR COATED FRENCH FRIES", "category": "Frozen", "code": ""}, {"vendor": "YUMMIE'S FROZEN", "name": "CARROT MUFFIN BATTER 18LB (KAJ)", "category": "Produce", "code": ""}, {"vendor": "YUMMIE'S FROZEN", "name": "CHOC CHIP MUFFIN BATTER 18LB (CRC)", "category": "Frozen", "code": ""}, {"vendor": "YUMMIE'S FROZEN", "name": "CORN MUFFIN BATTER 18LB (KAJ)", "category": "Frozen", "code": ""}, {"vendor": "YUMMIE'S FROZEN", "name": "DOUBLE CHOC MUFFIN BATTER 18LB (KAJ)", "category": "Frozen", "code": ""}, {"vendor": "YK PRODUCE", "name": "CARROT LOOSE", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "MUSHROOM 10", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "MUSHROOM PORTOBELLO 1", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "ROMAINE LETTUCE KOSHER BODEK", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "EGGPLANT", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "KIRBY-CUCUMBER", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "PEELED GARLIC", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "SQUASH YELLOW", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "EGGS 30 DOZEN XL", "category": "Grocery", "code": ""}, {"vendor": "YK PRODUCE", "name": "SQUASH CRATE", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "ORANGE PEPPER", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "PEPPER YELLOW", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "GREEN PEPPER", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "RED PEPPER", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "PEPPER JALAPENO SMALL", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "AVOCADOS CH", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "AVOCADO HASS RIPE", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "CELERY", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "FROZEN BEAN ROUND", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "TOMATO PLUM", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "TOMATO 5X6", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "GRAPE TOMATO", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "ONION RED JUMBO", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "SPANISH ONION", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "ONION RED JUMBO", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "COLESLAW KOSHER", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "SQUASH SPAGHETTI", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "POTATOES RED A", "category": "Produce", "code": ""}, {"vendor": "YK PRODUCE", "name": "POTATOES GPOD 100", "category": "Produce", "code": ""}, {"vendor": "BAGUETTES N MORE", "name": "9\" 170gr Baguettes white (40)", "category": "Bakery", "code": ""}, {"vendor": "BAGUETTES N MORE", "name": "9\" 170 gr Baguettes WW (40)", "category": "Bakery", "code": ""}, {"vendor": "BAGUETTES N MORE", "name": "12\" Wrap WW 6*12", "category": "Bakery", "code": ""}, {"vendor": "BAGUETTES N MORE", "name": "Regular Mini Baguette (200 PCs)", "category": "Bakery", "code": ""}, {"vendor": "BAGUETTES N MORE", "name": "Whole Wheat mini Baguette (200Pcs)", "category": "Bakery", "code": ""}, {"vendor": "BAGUETTES N MORE", "name": "Sourdough Mini packaged (4 bags of 25)", "category": "Supplies", "code": ""}, {"vendor": "BAGUETTES N MORE", "name": "French croissant 90gr 100 pcs", "category": "Bakery", "code": ""}, {"vendor": "BAGUETTES N MORE", "name": "Cinnamon Pastry Danish (24pcs)", "category": "Bakery", "code": ""}];
+const vendorInfo={"Affordable Distributers": {"phone": "718-928-7270", "email": "orders@affordabledistributors.com"}, "R L GOODS DIST.": {"phone": "718-436-4435", "email": "orders@rlfooddist.com"}, "And Kosher Distribution": {"phone": "201-257-6001", "email": "orders@kosherdairy.net"}, "Klein's Ice Cream": {"phone": "718-435-0124", "email": "kicorders@koshericecream.com"}, "Universal Beverages": {"phone": "718-965-1210", "email": "info@unibev.net"}, "YUMMIE'S FROZEN": {"phone": "718-705-8899 / 347-760-8246", "email": "yummiesfrozeninc@gmail.com"}, "YK PRODUCE": {"phone": "718-676-5925", "email": "office@ykproduce.com"}, "BAGUETTES N MORE": {"phone": "718-925-2727", "email": "office@baguettesnmore.com"}};
+const vendors=[...new Set(products.map(p=>p.vendor))]; let vendor=vendors[0],cart={};
+function key(p){return p.vendor+"||"+p.name}
+function change(p,d){let k=key(p);cart[k]=Math.max(0,(cart[k]||0)+d);if(!cart[k])delete cart[k];render()}
+function setV(v){vendor=v;render()}
+function render(){
+ let q=document.getElementById("search").value.toLowerCase();
+ let list=products.filter(p=>p.vendor===vendor&&(p.name+" "+p.category).toLowerCase().includes(q));
+ document.getElementById("title").textContent=vendor;
+ let vi=vendorInfo[vendor]; document.getElementById("contact").textContent=(vi.phone?vi.phone+" · ":"")+(vi.email||"");
+ document.getElementById("cats").textContent=list.length+" items · "+[...new Set(list.map(p=>p.category))].join(" · ");
+ document.getElementById("vendors").innerHTML=vendors.map(v=>`<button class="vbtn ${v===vendor?"active":""}" onclick='setV(${JSON.stringify(v)})'>${v} <span class="count">${products.filter(p=>p.vendor===v).length}</span></button>`).join("");
+ document.getElementById("grid").innerHTML=list.map(p=>`<div class="card"><div class="small">${p.category}</div><div class="name">${p.name}</div><div class="row"><div class="qty"><button onclick='change(${JSON.stringify(p)},-1)'>−</button><span>${cart[key(p)]||0}</span><button onclick='change(${JSON.stringify(p)},1)'>+</button></div><button class="add" onclick='change(${JSON.stringify(p)},1)'>Add</button></div></div>`).join("");
+ renderSum()
+}
+function selected(){return Object.entries(cart).map(([k,q])=>({p:products.find(x=>key(x)===k),q})).filter(x=>x.p)}
+function renderSum(){
+ let a=selected(),vs=[...new Set(a.map(x=>x.p.vendor))];
+ document.getElementById("sumgrid").innerHTML=vs.length?vs.map(v=>`<div class="vendorSum"><h3>${v}</h3>${a.filter(x=>x.p.vendor===v).map(x=>`<div class="line"><span>${x.p.name}</span><b>Qty ${x.q}</b></div>`).join("")}<div class="line"><button class="secondary" onclick='clearV(${JSON.stringify(v)})'>Clear ${v}</button></div></div>`).join(""):'<div class="small">No items selected yet.</div>'
+}
+function clearV(v){Object.keys(cart).filter(k=>k.startsWith(v+"||")).forEach(k=>delete cart[k]);render()}
+function clearAll(){cart={};render()}
+function textFor(v){
+ let buyer=document.getElementById("buyer").value||"Not specified",delivery=document.getElementById("delivery").value||"Not specified",notes=document.getElementById("notes").value||"None";
+ let rows=selected().filter(x=>x.p.vendor===v),l=["KAFF KAFE VENDOR ORDER","Vendor: "+v,"Ordered by: "+buyer,"Delivery: "+delivery,"Created: "+new Date().toLocaleString(),"","ITEMS"];
+ rows.forEach(x=>l.push(x.q+" x "+x.p.name)); l.push("","NOTES:",notes); return l.join("\n")
+}
+function sendOrders(){
+ let a=selected(); if(!a.length){alert("Please add at least one item.");return}
+ let vs=[...new Set(a.map(x=>x.p.vendor))];
+ let buyer=document.getElementById("buyer").value||"Not specified";
+ let delivery=document.getElementById("delivery").value||"Not specified";
+ let notes=document.getElementById("notes").value||"None";
+ let lines=["KAFF KAFE VENDOR ORDER","Ordered by: "+buyer,"Order / Delivery date: "+delivery,"Created: "+new Date().toLocaleString(),""];
+
+ vs.forEach((v,index)=>{
+   lines.push("");
+   lines.push("############################################################");
+   lines.push("ORDER SHEET "+(index+1)+" OF "+vs.length);
+   lines.push("VENDOR: "+v);
+   lines.push("############################################################");
+   lines.push("QTY | ITEM");
+   lines.push("------------------------------------------------------------");
+   a.filter(x=>x.p.vendor===v).forEach(x=>lines.push(String(x.q).padStart(3," ")+" | "+x.p.name));
+   lines.push("");
+   lines.push("Vendor Phone: "+(vendorInfo[v].phone||""));
+   lines.push("Vendor Email: "+(vendorInfo[v].email||""));
+   lines.push("------------------------------------------------------------");
+ });
+
+ lines.push("NOTES:");
+ lines.push(notes);
+ let email="graphics@kaffkafe.com";
+ let subject="TEST - Kaff Kafe Vendor Orders - "+new Date().toLocaleDateString();
+ window.location.href="mailto:"+encodeURIComponent(email)+"?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(lines.join("\n"));
+}
+function logout(){sessionStorage.removeItem("kk");document.getElementById("login").style.display="flex";document.getElementById("pw").value=""}
+document.getElementById("search").oninput=render;
+document.getElementById("lf").onsubmit=e=>{e.preventDefault();if(document.getElementById("u").value==="admin"&&document.getElementById("pw").value==="Kaffkafe!"){sessionStorage.setItem("kk","1");document.getElementById("login").style.display="none";document.getElementById("err").style.display="none"}else document.getElementById("err").style.display="block"};
+if(sessionStorage.getItem("kk")==="1")document.getElementById("login").style.display="none"; render();
+
+const CAL_KEY="kaffKafeVendorCalendarV1";
+let calCursor=new Date(); calCursor=new Date(calCursor.getFullYear(),calCursor.getMonth(),1);
+function calEvents(){try{return JSON.parse(localStorage.getItem(CAL_KEY)||"[]")}catch(e){return []}}
+function saveCalEvents(a){localStorage.setItem(CAL_KEY,JSON.stringify(a))}
+function fillCalVendors(){
+ const s=document.getElementById("calVendor");
+ s.innerHTML=vendors.map(v=>`<option value="${v.replace(/"/g,'&quot;')}">${v}</option>`).join("");
+}
+function isoLocal(d){let y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${day}`}
+function addCalendarEvent(){
+ let vendor=document.getElementById("calVendor").value,date=document.getElementById("calDate").value,note=document.getElementById("calNote").value.trim();
+ if(!date){alert("Please select an ordering date.");return}
+ let a=calEvents(); a.push({id:Date.now(),vendor,date,note,created:new Date().toISOString()}); saveCalEvents(a);
+ let d=new Date(date+"T12:00:00"); calCursor=new Date(d.getFullYear(),d.getMonth(),1);
+ document.getElementById("calNote").value=""; renderCalendar()
+}
+function deleteCalendarEvent(id){saveCalEvents(calEvents().filter(x=>x.id!==id));renderCalendar()}
+function moveMonth(n){calCursor=new Date(calCursor.getFullYear(),calCursor.getMonth()+n,1);renderCalendar()}
+function goToday(){let d=new Date();calCursor=new Date(d.getFullYear(),d.getMonth(),1);document.getElementById("calDate").value=isoLocal(d);renderCalendar()}
+function renderCalendar(){
+ const y=calCursor.getFullYear(),m=calCursor.getMonth(),ev=calEvents();
+ document.getElementById("monthLabel").textContent=calCursor.toLocaleString(undefined,{month:"long",year:"numeric"});
+ let first=new Date(y,m,1),start=new Date(y,m,1-first.getDay());
+ let heads=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(x=>`<div class="calHead">${x}</div>`).join("");
+ let cells="";
+ for(let i=0;i<42;i++){
+   let d=new Date(start);d.setDate(start.getDate()+i);let iso=isoLocal(d),same=d.getMonth()===m;
+   let dayEvents=ev.filter(x=>x.date===iso);
+   cells+=`<div class="calDay ${same?"":"muted"}"><div class="calDate">${d.getDate()}</div>${dayEvents.map(x=>`<div class="calEvent" title="Click to delete" onclick="if(confirm('Delete this calendar entry?'))deleteCalendarEvent(${x.id})"><b>${x.vendor}</b>${x.note?x.note:"Order"}</div>`).join("")}</div>`;
+ }
+ document.getElementById("calendarGrid").innerHTML=heads+cells;
+ let today=isoLocal(new Date());
+ let sorted=[...ev].sort((a,b)=>a.date.localeCompare(b.date));
+ document.getElementById("calendarList").innerHTML=sorted.length?sorted.map(x=>`<div class="calListRow"><b>${x.date}</b><span>${x.vendor}</span><span>${x.note||"Vendor order"}</span><button class="deleteEvent" onclick="deleteCalendarEvent(${x.id})">Delete</button></div>`).join(""):'<div class="small">No vendor ordering dates saved yet.</div>';
+}
+fillCalVendors(); goToday();
+
+</script></body></html>
